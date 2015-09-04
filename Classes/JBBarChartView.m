@@ -41,7 +41,7 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
 
 // View quick accessors
 - (CGFloat)availableHeight;
-- (CGFloat)normalizedHeightForRawHeight:(NSNumber*)rawHeight;
+- (CGFloat)normalizedHeightForRawHeight:(NSNumber *)rawHeight;
 - (CGFloat)barWidth;
 
 // Touch helpers
@@ -56,6 +56,9 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
 @end
 
 @implementation JBBarChartView
+
+@dynamic dataSource;
+@dynamic delegate;
 
 #pragma mark - Alloc/Init
 
@@ -296,7 +299,7 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
     return self.bounds.size.height - self.headerView.frame.size.height - self.footerView.frame.size.height - self.headerPadding - self.footerPadding;
 }
 
-- (CGFloat)normalizedHeightForRawHeight:(NSNumber*)rawHeight
+- (CGFloat)normalizedHeightForRawHeight:(NSNumber *)rawHeight
 {
     CGFloat minHeight = [self minimumValue];
     CGFloat maxHeight = [self maximumValue];
@@ -304,7 +307,7 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
     
     if ((maxHeight - minHeight) <= 0)
     {
-        return 0;
+        return [self availableHeight];
     }
     
     return ((value - minHeight) / (maxHeight - minHeight)) * [self availableHeight];
@@ -438,6 +441,33 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
     [self setState:state animated:animated force:NO callback:callback];
 }
 
+- (void)setVerticalSelectionViewVisible:(BOOL)verticalSelectionViewVisible animated:(BOOL)animated
+{
+	_verticalSelectionViewVisible = verticalSelectionViewVisible;
+	
+	if (animated)
+	{
+		[UIView animateWithDuration:kJBChartViewDefaultAnimationDuration delay:0.0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
+			self.verticalSelectionView.alpha = self.verticalSelectionViewVisible ? 1.0 : 0.0;
+		} completion:nil];
+	}
+	else
+	{
+		self.verticalSelectionView.alpha = _verticalSelectionViewVisible ? 1.0 : 0.0;
+	}
+}
+
+- (void)setVerticalSelectionViewVisible:(BOOL)verticalSelectionViewVisible
+{
+	[self setVerticalSelectionViewVisible:verticalSelectionViewVisible animated:NO];
+}
+
+- (void)setShowsVerticalSelection:(BOOL)showsVerticalSelection
+{
+	_showsVerticalSelection = showsVerticalSelection;
+	self.verticalSelectionView.hidden = _showsVerticalSelection ? NO : YES;
+}
+
 #pragma mark - Getters
 
 - (CGFloat)cachedMinHeight
@@ -476,6 +506,15 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
         return fmaxf(self.cachedMaxHeight, [super maximumValue]);
     }
     return self.cachedMaxHeight;    
+}
+
+- (UIView *)barViewAtIndex:(NSUInteger)index
+{
+	if (index < [self.barViews count])
+	{
+		return [self.barViews objectAtIndex:index];
+	}
+	return nil;
 }
 
 #pragma mark - Touch Helpers
@@ -579,35 +618,6 @@ static UIColor *kJBBarChartViewDefaultBarColor = nil;
     {
         [self.delegate didDeselectBarChartView:self];
     }
-}
-
-#pragma mark - Setters
-
-- (void)setVerticalSelectionViewVisible:(BOOL)verticalSelectionViewVisible animated:(BOOL)animated
-{
-    _verticalSelectionViewVisible = verticalSelectionViewVisible;
-    
-    if (animated)
-    {
-        [UIView animateWithDuration:kJBChartViewDefaultAnimationDuration delay:0.0 options:UIViewAnimationOptionBeginFromCurrentState animations:^{
-            self.verticalSelectionView.alpha = self.verticalSelectionViewVisible ? 1.0 : 0.0;
-        } completion:nil];
-    }
-    else
-    {
-        self.verticalSelectionView.alpha = _verticalSelectionViewVisible ? 1.0 : 0.0;
-    }
-}
-
-- (void)setVerticalSelectionViewVisible:(BOOL)verticalSelectionViewVisible
-{
-    [self setVerticalSelectionViewVisible:verticalSelectionViewVisible animated:NO];
-}
-
-- (void)setShowsVerticalSelection:(BOOL)showsVerticalSelection
-{
-    _showsVerticalSelection = showsVerticalSelection;
-    self.verticalSelectionView.hidden = _showsVerticalSelection ? NO : YES;
 }
 
 #pragma mark - Touches
